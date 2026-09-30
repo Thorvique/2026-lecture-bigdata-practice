@@ -41,7 +41,40 @@ def pagerank(graph, beta=0.85, iterations=100, tol=1e-10):
     you should call it converged. Return the ranks, and set `pagerank.iterations`
     to how many you actually used, because Task 2 measures that.
     """
-    raise NotImplementedError("implement PageRank")
+    nodes = list(graph)
+    n = len(nodes)
+    ranks = {node: 1.0 / n for node in nodes}
+    pagerank.iterations = 0
+
+    for iteration in range(1, iterations + 1):
+        # A dead end has nowhere to send its rank, so redistribute its rank
+        # uniformly across all nodes. This is the same destination choice as
+        # teleportation.
+        dead_end_rank = sum(ranks[node] for node in nodes
+                            if not graph[node])
+
+        # Every node receives the teleportation term and its share of the
+        # rank that came from dead ends.
+        new_ranks = {
+            node: (1 - beta) / n + beta * dead_end_rank / n
+            for node in nodes
+        }
+
+        # Distribute the rank of nodes with outgoing links to their targets.
+        for node in nodes:
+            targets = graph[node]
+            if targets:
+                share = beta * ranks[node] / len(targets)
+                for target in targets:
+                    new_ranks[target] += share
+
+        delta = sum(abs(new_ranks[node] - ranks[node]) for node in nodes)
+        ranks = new_ranks
+        pagerank.iterations = iteration
+        if delta < tol:
+            break
+
+    return ranks
 
 
 def pagerank_no_teleport(graph, iterations=100):
@@ -50,7 +83,25 @@ def pagerank_no_teleport(graph, iterations=100):
     It exists so you can watch both failures happen rather than take them on
     trust. The harness checks that it really does fail.
     """
-    raise NotImplementedError("implement the broken version")
+    nodes = list(graph)
+    n = len(nodes)
+    ranks = {node: 1.0 / n for node in nodes}
+
+    for _ in range(iterations):
+        new_ranks = {node: 0.0 for node in nodes}
+
+        # Follow links with probability 1. Rank at a dead end is discarded,
+        # which intentionally reproduces the broken behaviour.
+        for node in nodes:
+            targets = graph[node]
+            if targets:
+                share = ranks[node] / len(targets)
+                for target in targets:
+                    new_ranks[target] += share
+
+        ranks = new_ranks
+
+    return ranks
 
 
 # ------------------------------------------------------------------- harness

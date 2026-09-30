@@ -86,10 +86,53 @@ class YourPageRank:
     """
 
     def __init__(self, beta=0.85, tol=1e-10, max_iter=100):
-        raise NotImplementedError("write your PageRank")
+        self.beta = beta
+        self.tol = tol
+        self.max_iter = max_iter
+        self._memory = 0
+        self.iterations = 0
 
     def run(self, graph):
-        raise NotImplementedError
+        nodes = list(graph)
+        n = len(nodes)
+
+        if not n:
+            self._memory = 0
+            self.iterations = 0
+            return {}
+
+        ranks = {node: 1.0 / n for node in nodes}
+        self._memory = 2 * n
+        self.iterations = 0
+
+        for iteration in range(1, self.max_iter + 1):
+            dead_end_rank = sum(ranks[node] for node in nodes
+                                if not graph[node])
+
+            # The teleportation term and the uniformly redistributed rank of
+            # dead ends are both scalar values added to every node.
+            new_ranks = {
+                node: (1 - self.beta) / n
+                       + self.beta * dead_end_rank / n
+                for node in nodes
+            }
+
+            # Propagate rank directly through the adjacency lists.
+            for node in nodes:
+                targets = graph[node]
+                if targets:
+                    share = self.beta * ranks[node] / len(targets)
+                    for target in targets:
+                        new_ranks[target] += share
+
+            delta = sum(abs(new_ranks[node] - ranks[node])
+                        for node in nodes)
+            ranks = new_ranks
+            self.iterations = iteration
+            if delta < self.tol:
+                break
+
+        return ranks
 
     def memory_floats(self):
-        raise NotImplementedError
+        return self._memory
