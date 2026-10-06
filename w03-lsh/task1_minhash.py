@@ -30,7 +30,8 @@ BOOK_HASHES = [lambda r: (r + 1) % 5, lambda r: (3 * r + 1) % 5]
 
 def jaccard(a, b):
     """|a and b| / |a or b|. Empty union is 0, not an error."""
-    raise NotImplementedError("jaccard similarity")
+    union = a | b
+    return len(a & b) / len(union) if union else 0.0
 
 
 def minhash_signatures(columns, hashes, n_rows):
@@ -48,7 +49,15 @@ def minhash_signatures(columns, hashes, n_rows):
     written something correct that does not survive a dataset that does not fit
     in memory, and not fitting in memory is what this course is about.
     """
-    raise NotImplementedError("signature matrix")
+    # The signature is stored by column so the returned shape is
+    # [column][hash], while rows are visited exactly once.
+    signatures = [[n_rows] * len(hashes) for _ in columns]
+    for row in range(n_rows):
+        for column, values in enumerate(columns):
+            if row in values:
+                for h, hash_fn in enumerate(hashes):
+                    signatures[column][h] = min(signatures[column][h], hash_fn(row))
+    return signatures
 
 
 def lsh_candidates(signatures, bands):
@@ -60,7 +69,26 @@ def lsh_candidates(signatures, bands):
     The signature length must divide evenly by `bands`, or you have to decide
     what to do with the remainder. Say what you decided.
     """
-    raise NotImplementedError("LSH candidate pairs")
+    if not signatures:
+        return set()
+    width, remainder = divmod(len(signatures[0]), bands)
+    if remainder:
+        raise ValueError("signature length must divide evenly by bands")
+    if any(len(signature) != len(signatures[0]) for signature in signatures):
+        raise ValueError("all signatures must have the same length")
+
+    candidates = set()
+    for band in range(bands):
+        start = band * width
+        buckets = {}
+        for column, signature in enumerate(signatures):
+            key = tuple(signature[start:start + width])
+            buckets.setdefault(key, []).append(column)
+        for columns in buckets.values():
+            for left, i in enumerate(columns):
+                for j in columns[left + 1:]:
+                    candidates.add((min(i, j), max(i, j)))
+    return candidates
 
 
 # ------------------------------------------------------------------- harness

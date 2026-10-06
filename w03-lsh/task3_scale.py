@@ -17,6 +17,10 @@ It also checks **recall** - which of the truly similar pairs you found. Skipping
 comparisons is easy; skipping comparisons without losing the pairs is the task.
 """
 
+PRIME = 10007
+HASHES = 120
+BANDS = 30
+
 
 class BruteForce:
     """Correct, and quadratic."""
@@ -61,7 +65,32 @@ class YourFinder:
     """
 
     def __init__(self, threshold):
-        raise NotImplementedError("write your finder")
+        self.threshold = threshold
+        self.hashes = [((i * 37 + 1) % PRIME, (i * 101 + 17) % PRIME)
+                       for i in range(HASHES)]
 
     def find(self, docs, similarity):
-        raise NotImplementedError
+        signatures = [[PRIME] * HASHES for _ in docs]
+        for doc_index, doc in enumerate(docs):
+            signature = signatures[doc_index]
+            for shingle in doc:
+                for h, (a, b) in enumerate(self.hashes):
+                    value = (a * shingle + b) % PRIME
+                    if value < signature[h]:
+                        signature[h] = value
+
+        rows_per_band = HASHES // BANDS
+        candidates = set()
+        for band in range(BANDS):
+            start = band * rows_per_band
+            buckets = {}
+            for index, signature in enumerate(signatures):
+                key = tuple(signature[start:start + rows_per_band])
+                buckets.setdefault(key, []).append(index)
+            for bucket in buckets.values():
+                for left, i in enumerate(bucket):
+                    for j in bucket[left + 1:]:
+                        candidates.add((i, j) if i < j else (j, i))
+
+        return {pair for pair in candidates
+                if similarity(docs[pair[0]], docs[pair[1]]) >= self.threshold}
