@@ -30,7 +30,12 @@ BASKETS = [
 
 def frequent_singletons(baskets, support):
     """Items appearing in at least `support` baskets. Return {item: count}."""
-    raise NotImplementedError("pass one")
+    counts = {}
+    for basket in baskets:
+        for item in basket:
+            counts[item] = counts.get(item, 0) + 1
+    return {item: count for item, count in counts.items()
+            if count >= support}
 
 
 def frequent_pairs(baskets, support):
@@ -44,7 +49,19 @@ def frequent_pairs(baskets, support):
     A-Priori exists to avoid, and it will pass this harness while failing the
     point. Task 3 measures whether you actually did it.
     """
-    raise NotImplementedError("pass two")
+    frequent = set(frequent_singletons(baskets, support))
+    pair_counts = {}
+
+    for basket in baskets:
+        # The intersection is the A-Priori candidate set for this basket.
+        # In particular, cola and egg never enter this pass in the verifier.
+        items = sorted(set(basket) & frequent)
+        for a, b in combinations(items, 2):
+            pair = frozenset((a, b))
+            pair_counts[pair] = pair_counts.get(pair, 0) + 1
+
+    return {pair: count for pair, count in pair_counts.items()
+            if count >= support}
 
 
 def association_rules(baskets, support, min_confidence):
@@ -60,7 +77,21 @@ def association_rules(baskets, support, min_confidence):
     rule with high confidence and lift near 1 tells you nothing - the consequent
     was common anyway - and §6.1.3 is about why that matters more than it looks.
     """
-    raise NotImplementedError("rules")
+    singleton_counts = frequent_singletons(baskets, support)
+    pairs = frequent_pairs(baskets, support)
+    total_baskets = len(baskets)
+    rules = []
+
+    for pair, pair_count in pairs.items():
+        a, b = sorted(pair)
+        for antecedent, consequent in ((a, b), (b, a)):
+            confidence = pair_count / singleton_counts[antecedent]
+            consequent_support = singleton_counts[consequent] / total_baskets
+            lift = confidence / consequent_support
+            if confidence >= min_confidence:
+                rules.append((antecedent, consequent, confidence, lift))
+
+    return sorted(rules, key=lambda rule: (-rule[2], rule[0], rule[1]))
 
 
 # ------------------------------------------------------------------- harness

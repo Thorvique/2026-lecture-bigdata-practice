@@ -1,0 +1,90 @@
+{
+  "machine": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "logical_cpus": 32,
+    "ram_gb": 34.05,
+    "python": "3.14.0",
+    "started_at": "2026-10-07T06:15:49.889792+02:00",
+    "conditions": "Interactive Windows desktop with Codex and PowerShell active; no deliberate background load."
+  },
+  "runs": [
+    {
+      "support": 400,
+      "frequent_pairs": 249,
+      "peak_counters": 10585,
+      "seconds": 0.7342923999822233,
+      "peak_bytes": 1146012,
+      "status": "completed"
+    },
+    {
+      "support": 200,
+      "frequent_pairs": 776,
+      "peak_counters": 58626,
+      "seconds": 1.666591299988795,
+      "peak_bytes": 6714128,
+      "status": "completed"
+    },
+    {
+      "support": 100,
+      "frequent_pairs": 2244,
+      "peak_counters": 273701,
+      "seconds": 4.315076799975941,
+      "peak_bytes": 28562368,
+      "status": "completed"
+    },
+    {
+      "support": 50,
+      "frequent_pairs": 6397,
+      "peak_counters": 820259,
+      "seconds": 7.971489999996265,
+      "peak_bytes": 107747360,
+      "status": "completed"
+    },
+    {
+      "support": 25,
+      "frequent_pairs": 17045,
+      "peak_counters": 893456,
+      "seconds": 8.421838900016155,
+      "peak_bytes": 107744896,
+      "status": "completed"
+    },
+    {
+      "support": 12,
+      "frequent_pairs": 43116,
+      "peak_counters": 893456,
+      "seconds": 8.538901499996427,
+      "peak_bytes": 109847504,
+      "status": "completed"
+    },
+    {
+      "support": 6,
+      "frequent_pairs": 101938,
+      "peak_counters": 893456,
+      "seconds": 8.26203510002233,
+      "peak_bytes": 126485184,
+      "status": "completed"
+    },
+    {
+      "support": 3,
+      "frequent_pairs": 250054,
+      "peak_counters": 893456,
+      "seconds": 8.090976500010584,
+      "peak_bytes": 163855356,
+      "status": "completed"
+    },
+    {
+      "support": 1,
+      "frequent_pairs": 893456,
+      "peak_counters": 893456,
+      "seconds": 9.904344399983529,
+      "peak_bytes": 334287468,
+      "status": "completed"
+    }
+  ],
+  "stopping": {
+    "support": 1,
+    "reason": "Support 1 was the stopping point: all 893,456 observed pairs became frequent, so the counter set saturated and the run was no longer a useful threshold experiment.",
+    "resource": "Memory became the limiting resource: peak Python allocation was 334.3 MB at support 1, although the run completed safely."
+  }
+}

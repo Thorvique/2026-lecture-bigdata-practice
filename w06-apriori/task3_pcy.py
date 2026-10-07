@@ -18,6 +18,7 @@ spending pass one's spare memory to shrink it.
 Correctness first: you must find exactly the same frequent pairs. Finding fewer
 is not an optimisation.
 """
+from array import array
 from collections import Counter
 from itertools import combinations
 
@@ -75,8 +76,53 @@ class YourAlgorithm:
         observation.md asks about it
     """
 
-    def __init__(self, support):
-        raise NotImplementedError("write your algorithm")
+    DEFAULT_BUCKETS = 1_000_003
+
+    def __init__(self, support, bucket_count=DEFAULT_BUCKETS):
+        if bucket_count < 1:
+            raise ValueError("bucket_count must be positive")
+        self.support = support
+        self.bucket_count = int(bucket_count)
+        self.peak_counters = 0
+        self.bucket_counter_bytes = 0
+        self.bitmap_bytes = 0
+
+    def _bucket(self, a, b):
+        # Tuple hashing avoids Python's randomized string hash issue while
+        # remaining valid for any hashable item values.
+        return hash((a, b)) % self.bucket_count
 
     def run(self, baskets):
-        raise NotImplementedError
+        # Pass one: count singletons and hash every observed pair into a fixed
+        # array.  Hashing is deliberately done before singleton filtering: it
+        # is the PCY pass-one bucket count, not a second pair-counting pass.
+        singleton_counts = Counter()
+        bucket_counts = array("I", [0]) * self.bucket_count
+        for basket in baskets:
+            items = sorted(set(basket))
+            singleton_counts.update(items)
+            for a, b in combinations(items, 2):
+                bucket_counts[self._bucket(a, b)] += 1
+
+        frequent = {item for item, count in singleton_counts.items()
+                    if count >= self.support}
+
+        # Collapse the integer bucket counts to the bitmap used by pass two;
+        # the full bucket counters are not kept alive while pair counters grow.
+        bitmap = bytearray(
+            1 if count >= self.support else 0 for count in bucket_counts
+        )
+        self.bucket_counter_bytes = len(bucket_counts) * bucket_counts.itemsize
+        self.bitmap_bytes = len(bitmap)
+        del bucket_counts
+
+        pair_counts = Counter()
+        for basket in baskets:
+            items = sorted(set(basket) & frequent)
+            for a, b in combinations(items, 2):
+                if bitmap[self._bucket(a, b)]:
+                    pair_counts[(a, b)] += 1
+            self.peak_counters = max(self.peak_counters, len(pair_counts))
+
+        return {frozenset(pair): count for pair, count in pair_counts.items()
+                if count >= self.support}
